@@ -75,13 +75,13 @@ namespace Jellyfin.Data.Entities.Libraries
         /// <inheritdoc />
         public ItemImageInfo? GetImageInfo(ImageType imageType, int imageIndex)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />
         public void RemoveImage(ItemImageInfo image)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
 
         /// <inheritdoc />
