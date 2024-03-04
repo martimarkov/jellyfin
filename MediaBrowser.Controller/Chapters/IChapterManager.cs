@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Interfaces;
 using MediaBrowser.Controller.Entities;
 
 namespace MediaBrowser.Controller.Chapters
@@ -27,7 +28,7 @@ namespace MediaBrowser.Controller.Chapters
         /// <param name="chapterIndex">The ChapterIndex.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The <see cref="ChapterInfo"/>.</returns>
-        public Task<ChapterInfo?> GetChapter(BaseItem item, int chapterIndex, CancellationToken cancellationToken);
+        public Task<ChapterInfo?> GetChapter(IBaseItemMigration item, int chapterIndex, CancellationToken cancellationToken);
 
         /// <summary>
         /// Get all chapters for item.
@@ -35,6 +36,6 @@ namespace MediaBrowser.Controller.Chapters
         /// <param name="item">The BaseItem.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <returns>The <see cref="ChapterInfo"/>.</returns>
-        public Task<List<ChapterInfo>> GetChapters(BaseItem item, CancellationToken cancellationToken);
+        public Task<List<ChapterInfo>> GetChapters(IBaseItemMigration item, CancellationToken cancellationToken);
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Jellyfin.Data.Enums;
 using MediaBrowser.Model.Configuration;
 using MediaBrowser.Model.Entities;
 

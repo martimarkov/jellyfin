@@ -15,7 +15,7 @@ namespace Jellyfin.Server.Implementations.Migrations.LegacyEmby
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.2");
 
             modelBuilder.Entity("Jellyfin.Data.Entities.ChapterInfo", b =>
                 {
@@ -24,6 +24,12 @@ namespace Jellyfin.Server.Implementations.Migrations.LegacyEmby
 
                     b.Property<int>("ChapterIndex")
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateModified")
+                        .HasColumnType("TEXT");
 
                     b.Property<DateTime>("ImageDateModified")
                         .HasColumnType("TEXT");
@@ -48,6 +54,12 @@ namespace Jellyfin.Server.Implementations.Migrations.LegacyEmby
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateModified")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -62,6 +74,44 @@ namespace Jellyfin.Server.Implementations.Migrations.LegacyEmby
                     b.ToTable("Genres");
                 });
 
+            modelBuilder.Entity("Jellyfin.Data.Entities.Libraries.ItemImageInfo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("BlurHash")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateModified")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("GenreId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Height")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Width")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GenreId");
+
+                    b.ToTable("ItemImageInfos");
+                });
+
             modelBuilder.Entity("Jellyfin.Data.Entities.UserItemData", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -72,6 +122,12 @@ namespace Jellyfin.Server.Implementations.Migrations.LegacyEmby
 
                     b.Property<int?>("AudioStreamIndex")
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("DateCreated")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("DateModified")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("IsFavorite")
                         .HasColumnType("INTEGER");
@@ -100,6 +156,18 @@ namespace Jellyfin.Server.Implementations.Migrations.LegacyEmby
                     b.HasKey("UserId", "Key");
 
                     b.ToTable("UserDatas");
+                });
+
+            modelBuilder.Entity("Jellyfin.Data.Entities.Libraries.ItemImageInfo", b =>
+                {
+                    b.HasOne("Jellyfin.Data.Entities.Libraries.Genre", null)
+                        .WithMany("ImageInfos")
+                        .HasForeignKey("GenreId");
+                });
+
+            modelBuilder.Entity("Jellyfin.Data.Entities.Libraries.Genre", b =>
+                {
+                    b.Navigation("ImageInfos");
                 });
 #pragma warning restore 612, 618
         }

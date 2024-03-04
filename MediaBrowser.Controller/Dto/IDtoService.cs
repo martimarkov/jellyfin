@@ -2,8 +2,11 @@
 
 using System.Collections.Generic;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Interfaces;
+using Jellyfin.Server.Implementations;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Dto;
+using Genre = Jellyfin.Data.Entities.Libraries.Genre;
 
 namespace MediaBrowser.Controller.Dto
 {
@@ -17,7 +20,7 @@ namespace MediaBrowser.Controller.Dto
         /// </summary>
         /// <param name="item">The item.</param>
         /// <returns>System.Nullable&lt;System.Double&gt;.</returns>
-        double? GetPrimaryImageAspectRatio(BaseItem item);
+        double? GetPrimaryImageAspectRatio(IBaseItemMigration item);
 
         /// <summary>
         /// Gets the base item dto.
@@ -28,6 +31,16 @@ namespace MediaBrowser.Controller.Dto
         /// <param name="owner">The owner.</param>
         /// <returns>BaseItemDto.</returns>
         BaseItemDto GetBaseItemDto(BaseItem item, DtoOptions options, User? user = null, BaseItem? owner = null);
+
+        /// <summary>
+        /// Gets the BaseItemDto for a given Genre.
+        /// </summary>
+        /// <param name="item">The Genre.</param>
+        /// <param name="options">DtoOptions to customize the returned BaseItemDto.</param>
+        /// <param name="user">The User requesting the BaseItemDto. Default is null.</param>
+        /// <param name="owner">The BaseItem owner. Default is null.</param>
+        /// <returns>The BaseItemDto for the given Genre.</returns>
+        BaseItemDto GetBaseItemDto(ILibraryModel item, DtoOptions options, User? user = null, BaseItem? owner = null);
 
         /// <summary>
         /// Gets the base item dtos.

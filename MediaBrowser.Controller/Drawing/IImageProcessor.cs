@@ -4,6 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Entities.Libraries;
+using Jellyfin.Data.Interfaces;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Drawing;
 using MediaBrowser.Model.Entities;
@@ -40,7 +42,7 @@ namespace MediaBrowser.Controller.Drawing
         /// <param name="item">The base item.</param>
         /// <param name="info">The information.</param>
         /// <returns>ImageDimensions.</returns>
-        ImageDimensions GetImageDimensions(BaseItem item, ItemImageInfo info);
+        ImageDimensions GetImageDimensions(IBaseItemMigration item, ItemImageInfo info);
 
         /// <summary>
         /// Gets the blurhash of the image.
@@ -63,9 +65,9 @@ namespace MediaBrowser.Controller.Drawing
         /// <param name="item">The item.</param>
         /// <param name="image">The image.</param>
         /// <returns>Guid.</returns>
-        string GetImageCacheTag(BaseItem item, ItemImageInfo image);
+        string GetImageCacheTag(IBaseItemMigration item, ItemImageInfo image);
 
-        string? GetImageCacheTag(BaseItem item, ChapterInfo chapter);
+        string? GetImageCacheTag(IBaseItemMigration item, ChapterInfo chapter);
 
         string? GetImageCacheTag(User user);
 

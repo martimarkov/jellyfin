@@ -1,12 +1,14 @@
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Threading.Tasks;
 using Jellyfin.Api.Extensions;
 using Jellyfin.Api.Helpers;
 using Jellyfin.Api.ModelBinders;
 using Jellyfin.Data.Entities;
 using Jellyfin.Data.Enums;
 using Jellyfin.Extensions;
+using Jellyfin.Server.Implementations.Library.Interfaces;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Library;
@@ -16,7 +18,7 @@ using MediaBrowser.Model.Querying;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Genre = MediaBrowser.Controller.Entities.Genre;
+using Genre = Jellyfin.Data.Entities.Libraries.Genre;
 
 namespace Jellyfin.Api.Controllers;
 
@@ -28,6 +30,7 @@ public class GenresController : BaseJellyfinApiController
 {
     private readonly IUserManager _userManager;
     private readonly ILibraryManager _libraryManager;
+    private readonly IGenreManager _genreManager;
     private readonly IDtoService _dtoService;
 
     /// <summary>
@@ -35,14 +38,17 @@ public class GenresController : BaseJellyfinApiController
     /// </summary>
     /// <param name="userManager">Instance of the <see cref="IUserManager"/> interface.</param>
     /// <param name="libraryManager">Instance of the <see cref="ILibraryManager"/> interface.</param>
+    /// <param name="genreManager">Instance of the <see cref="IGenreManager"/> interface.</param>
     /// <param name="dtoService">Instance of the <see cref="IDtoService"/> interface.</param>
     public GenresController(
         IUserManager userManager,
         ILibraryManager libraryManager,
+        IGenreManager genreManager,
         IDtoService dtoService)
     {
         _userManager = userManager;
         _libraryManager = libraryManager;
+        _genreManager = genreManager;
         _dtoService = dtoService;
     }
 
@@ -155,55 +161,18 @@ public class GenresController : BaseJellyfinApiController
     /// <returns>An <see cref="OkResult"/> containing the genre.</returns>
     [HttpGet("{genreName}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult<BaseItemDto> GetGenre([FromRoute, Required] string genreName, [FromQuery] Guid? userId)
+    public async Task<ActionResult<BaseItemDto>> GetGenre([FromRoute, Required] string genreName, [FromQuery] Guid? userId)
     {
         userId = RequestHelpers.GetUserId(User, userId);
         var dtoOptions = new DtoOptions()
             .AddClientFields(User);
 
-        Genre? item;
-        if (genreName.Contains(BaseItem.SlugChar, StringComparison.OrdinalIgnoreCase))
-        {
-            item = GetItemFromSlugName<Genre>(_libraryManager, genreName, dtoOptions, BaseItemKind.Genre);
-        }
-        else
-        {
-            item = _libraryManager.GetGenre(genreName);
-        }
-
-        item ??= new Genre();
+        Genre item = await _libraryManager.GetGenreAsync(genreName, BaseItem.SlugChar).ConfigureAwait(false);
 
         var user = userId.IsNullOrEmpty()
             ? null
             : _userManager.GetUserById(userId.Value);
 
-        return _dtoService.GetBaseItemDto(item, dtoOptions, user);
-    }
-
-    private T? GetItemFromSlugName<T>(ILibraryManager libraryManager, string name, DtoOptions dtoOptions, BaseItemKind baseItemKind)
-        where T : BaseItem, new()
-    {
-        var result = libraryManager.GetItemList(new InternalItemsQuery
-        {
-            Name = name.Replace(BaseItem.SlugChar, '&'),
-            IncludeItemTypes = new[] { baseItemKind },
-            DtoOptions = dtoOptions
-        }).OfType<T>().FirstOrDefault();
-
-        result ??= libraryManager.GetItemList(new InternalItemsQuery
-        {
-            Name = name.Replace(BaseItem.SlugChar, '/'),
-            IncludeItemTypes = new[] { baseItemKind },
-            DtoOptions = dtoOptions
-        }).OfType<T>().FirstOrDefault();
-
-        result ??= libraryManager.GetItemList(new InternalItemsQuery
-        {
-            Name = name.Replace(BaseItem.SlugChar, '?'),
-            IncludeItemTypes = new[] { baseItemKind },
-            DtoOptions = dtoOptions
-        }).OfType<T>().FirstOrDefault();
-
-        return result;
+        return await _genreManager.GetGenreDto(item, dtoOptions, user).ConfigureAwait(false);
     }
 }

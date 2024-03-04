@@ -9,6 +9,9 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Data.Entities.Libraries;
+using Jellyfin.Data.Enums;
+using Jellyfin.Data.Interfaces;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.Entities;
@@ -19,6 +22,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Net;
+using Genre = MediaBrowser.Controller.Entities.Genre;
 
 namespace Emby.Server.Implementations.Images
 {
@@ -96,7 +100,7 @@ namespace Emby.Server.Implementations.Images
 
             var items = GetItemsWithImages(item);
 
-            return FetchToFileInternal(item, items, imageType, cancellationToken);
+            return FetchToFileInternal(item, (IReadOnlyList<BaseItem>)items, imageType, cancellationToken);
         }
 
         protected async Task<ItemUpdateType> FetchToFileInternal(
@@ -126,7 +130,7 @@ namespace Emby.Server.Implementations.Images
             return ItemUpdateType.ImageUpdate;
         }
 
-        protected abstract IReadOnlyList<BaseItem> GetItemsWithImages(BaseItem item);
+        protected abstract IReadOnlyList<IBaseItemMigration> GetItemsWithImages(BaseItem item);
 
         protected string CreateThumbCollage(BaseItem primaryItem, IEnumerable<BaseItem> items, string outputPath)
         {

@@ -11,8 +11,11 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Data;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Entities.Libraries;
 using Jellyfin.Data.Enums;
+using Jellyfin.Data.Interfaces;
 using Jellyfin.Extensions;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller.Channels;
@@ -32,13 +35,14 @@ using MediaBrowser.Model.LiveTv;
 using MediaBrowser.Model.MediaInfo;
 using MediaBrowser.Model.Providers;
 using Microsoft.Extensions.Logging;
+using MusicAlbum = MediaBrowser.Controller.Entities.Audio.MusicAlbum;
 
 namespace MediaBrowser.Controller.Entities
 {
     /// <summary>
     /// Class BaseItem.
     /// </summary>
-    public abstract class BaseItem : IHasProviderIds, IHasLookupInfo<ItemLookupInfo>, IEquatable<BaseItem>
+    public abstract class BaseItem : IHasProviderIds, IHasLookupInfo<ItemLookupInfo>, IEquatable<BaseItem>, IBaseItemMigration, IHasRating, IHasMetadata, IHasRemoteTrailers, IHasDynamicPath, IHasLocalTrailers
     {
         private BaseItemKind? _baseItemKind;
 
@@ -510,7 +514,7 @@ namespace MediaBrowser.Controller.Entities
                     if (!string.IsNullOrEmpty(ForcedSortName))
                     {
                         // Need the ToLower because that's what CreateSortName does
-                        _sortName = ModifySortChunks(ForcedSortName).ToLowerInvariant();
+                        _sortName = BaseItemHelpers.ModifySortChunks(ForcedSortName).ToLowerInvariant();
                     }
                     else
                     {
@@ -528,7 +532,7 @@ namespace MediaBrowser.Controller.Entities
         public virtual Guid DisplayParentId => ParentId;
 
         [JsonIgnore]
-        public BaseItem DisplayParent
+        public IBaseItemMigration DisplayParent
         {
             get
             {
@@ -671,7 +675,7 @@ namespace MediaBrowser.Controller.Entities
                 var parent = DisplayParent;
                 if (parent is not null)
                 {
-                    return parent.OfficialRatingForComparison;
+                    return ((BaseItem)parent).OfficialRatingForComparison;
                 }
 
                 return null;
@@ -692,7 +696,7 @@ namespace MediaBrowser.Controller.Entities
                 var parent = DisplayParent;
                 if (parent is not null)
                 {
-                    return parent.CustomRatingForComparison;
+                    return ((BaseItem)parent).CustomRatingForComparison;
                 }
 
                 return null;
@@ -770,6 +774,8 @@ namespace MediaBrowser.Controller.Entities
         [JsonIgnore]
         public virtual bool IsDisplayedAsFolder => false;
 
+        public bool IsBaseItem => true;
+
         /// <summary>
         /// Gets or sets the remote trailers.
         /// </summary>
@@ -823,12 +829,14 @@ namespace MediaBrowser.Controller.Entities
             return false;
         }
 
-        public BaseItem GetOwner()
+#nullable enable
+        public IBaseItemMigration? GetOwner()
         {
             var ownerId = OwnerId;
             return ownerId.IsEmpty() ? null : LibraryManager.GetItemById(ownerId);
         }
 
+#nullable disable
         public bool CanDelete(User user, List<Folder> allCollectionFolders)
         {
             return CanDelete() && IsAuthorizedToDelete(user, allCollectionFolders);
@@ -927,48 +935,11 @@ namespace MediaBrowser.Controller.Entities
                 sortable = sortable.Replace(replaceChar, " ", StringComparison.Ordinal);
             }
 
-            return ModifySortChunks(sortable);
+            return BaseItemHelpers.ModifySortChunks(sortable);
         }
 
-        internal static string ModifySortChunks(ReadOnlySpan<char> name)
-        {
-            static void AppendChunk(StringBuilder builder, bool isDigitChunk, ReadOnlySpan<char> chunk)
-            {
-                if (isDigitChunk && chunk.Length < 10)
-                {
-                    builder.Append('0', 10 - chunk.Length);
-                }
-
-                builder.Append(chunk);
-            }
-
-            if (name.IsEmpty)
-            {
-                return string.Empty;
-            }
-
-            var builder = new StringBuilder(name.Length);
-
-            int chunkStart = 0;
-            bool isDigitChunk = char.IsDigit(name[0]);
-            for (int i = 0; i < name.Length; i++)
-            {
-                var isDigit = char.IsDigit(name[i]);
-                if (isDigit != isDigitChunk)
-                {
-                    AppendChunk(builder, isDigitChunk, name.Slice(chunkStart, i - chunkStart));
-                    chunkStart = i;
-                    isDigitChunk = isDigit;
-                }
-            }
-
-            AppendChunk(builder, isDigitChunk, name.Slice(chunkStart));
-
-            // logger.LogDebug("ModifySortChunks Start: {0} End: {1}", name, builder.ToString());
-            return builder.ToString().RemoveDiacritics();
-        }
-
-        public BaseItem GetParent()
+#nullable enable
+        public IBaseItemMigration? GetParent()
         {
             var parentId = ParentId;
             if (parentId.IsEmpty())
@@ -979,13 +950,14 @@ namespace MediaBrowser.Controller.Entities
             return LibraryManager.GetItemById(parentId);
         }
 
+#nullable disable
         public IEnumerable<BaseItem> GetParents()
         {
             var parent = GetParent();
 
             while (parent is not null)
             {
-                yield return parent;
+                yield return (BaseItem)parent;
 
                 parent = parent.GetParent();
             }
@@ -1789,6 +1761,7 @@ namespace MediaBrowser.Controller.Entities
             }
 
             var list = genres.ToList();
+            // TODO: This does not save to the DB at the moment.
             list.Add(genre.Name);
             Genres = list.ToArray();
         }
@@ -1970,7 +1943,7 @@ namespace MediaBrowser.Controller.Entities
         }
 
         public virtual Task UpdateToRepositoryAsync(ItemUpdateType updateReason, CancellationToken cancellationToken)
-         => LibraryManager.UpdateItemAsync(this, GetParent(), updateReason, cancellationToken);
+         => LibraryManager.UpdateItemAsync(this, (BaseItem)GetParent(), updateReason, cancellationToken);
 
         /// <summary>
         /// Validates that images within the item are still on the filesystem.
@@ -2455,14 +2428,15 @@ namespace MediaBrowser.Controller.Entities
             return RefreshMetadataForOwnedItem(video, copyTitleMetadata, newOptions, cancellationToken);
         }
 
-        public string GetEtag(User user)
+#nullable enable
+        public string GetEtag(User? user)
         {
             var list = GetEtagValues(user);
 
             return string.Join('|', list).GetMD5().ToString("N", CultureInfo.InvariantCulture);
         }
 
-        protected virtual List<string> GetEtagValues(User user)
+        public virtual IList<string> GetEtagValues(User? user)
         {
             return new List<string>
             {
@@ -2470,6 +2444,7 @@ namespace MediaBrowser.Controller.Entities
             };
         }
 
+#nullable disable
         public virtual IEnumerable<Guid> GetAncestorIds()
         {
             return GetParents().Select(i => i.Id).Concat(LibraryManager.GetCollectionFolders(this).Select(i => i.Id));

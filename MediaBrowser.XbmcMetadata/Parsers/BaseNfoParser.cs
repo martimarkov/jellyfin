@@ -558,7 +558,7 @@ namespace MediaBrowser.XbmcMetadata.Parsers
 
                             foreach (var genreName in parts)
                             {
-                                Genre genre = await _genreManager.AddGenre(genreName).ConfigureAwait(false);
+                                Genre genre = await _genreManager.AddGenreAsync(genreName).ConfigureAwait(false);
                                 item.AddGenre(genre);
                             }
                         }

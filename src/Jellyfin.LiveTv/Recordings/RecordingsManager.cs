@@ -642,7 +642,7 @@ public sealed class RecordingsManager : IRecordingsManager, IDisposable
             var parentItem = item.GetParent();
             if (parentItem is not null && parentItem is not AggregateFolder)
             {
-                item = parentItem;
+                item = (BaseItem)parentItem;
             }
         }
 

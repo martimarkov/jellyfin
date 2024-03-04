@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Data.Enums;
 using Jellyfin.Server.Implementations.Library.Interfaces;
 using MediaBrowser.Common.Net;
 using MediaBrowser.Controller.Configuration;

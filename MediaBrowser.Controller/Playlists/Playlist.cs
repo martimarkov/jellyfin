@@ -193,7 +193,7 @@ namespace MediaBrowser.Controller.Playlists
                 {
                     Recursive = true,
                     IncludeItemTypes = new[] { BaseItemKind.Audio },
-                    GenreIds = new[] { musicGenre.Id },
+                    GenreIds = new[] { musicGenre.Id.ToString() },
                     OrderBy = new[] { (ItemSortBy.AlbumArtist, SortOrder.Ascending), (ItemSortBy.Album, SortOrder.Ascending), (ItemSortBy.SortName, SortOrder.Ascending) },
                     DtoOptions = options
                 });

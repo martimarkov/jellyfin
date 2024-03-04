@@ -246,7 +246,7 @@ namespace MediaBrowser.Providers.Plugins.Tmdb.Movies
 
             foreach (var genreName in genres.Select(g => g.Name))
             {
-                Genre genre = await _genreManager.AddGenre(genreName).ConfigureAwait(false);
+                Genre genre = await _genreManager.AddGenreAsync(genreName).ConfigureAwait(false);
                 movie.AddGenre(genre);
             }
 

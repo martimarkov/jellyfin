@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Emby.Server.Implementations.Images;
+using Jellyfin.Data;
+using Jellyfin.Data.Enums;
+using Jellyfin.Data.Interfaces;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.Entities;
@@ -47,7 +50,7 @@ namespace Emby.Server.Implementations.Collections
         }
 
         /// <inheritdoc />
-        protected override IReadOnlyList<BaseItem> GetItemsWithImages(BaseItem item)
+        protected override IReadOnlyList<IBaseItemMigration> GetItemsWithImages(BaseItem item)
         {
             var playlist = (BoxSet)item;
 
@@ -71,7 +74,7 @@ namespace Emby.Server.Implementations.Collections
 
                     var parent = subItem.GetOwner() ?? subItem.GetParent();
 
-                    if (parent is not null && parent.HasImage(ImageType.Primary))
+                    if (parent is not null && ((BaseItem)parent).HasImage(ImageType.Primary))
                     {
                         if (parent is MusicAlbum)
                         {
@@ -82,7 +85,7 @@ namespace Emby.Server.Implementations.Collections
                     return null;
                 })
                 .Where(i => i is not null)
-                .GroupBy(x => x!.Id) // We removed the null values
+                .GroupBy(x => x!.GetGuidId()) // We removed the null values
                 .Select(x => x.First())
                 .ToList()!; // Again... the list doesn't contain any null values
         }

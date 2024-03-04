@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
+using Jellyfin.Data.Entities.Libraries;
 using Jellyfin.Data.Enums;
 using Jellyfin.Extensions;
 using Jellyfin.LiveTv.Configuration;
@@ -19,6 +20,7 @@ using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Model.Entities;
 using Microsoft.Extensions.Logging;
 using Genre = Jellyfin.Data.Entities.Libraries.Genre;
+using MetadataProvider = MediaBrowser.Model.Entities.MetadataProvider;
 
 namespace Jellyfin.LiveTv.Recordings;
 
@@ -88,22 +90,22 @@ public class RecordingsMetadataManager
 
             if (timer.IsSports)
             {
-                Genre genre = await _genreManager.AddGenre("Sports").ConfigureAwait(false);
+                Genre genre = await _genreManager.AddGenreAsync("Sports").ConfigureAwait(false);
                 program.AddGenre(genre);
             }
 
             if (timer.IsKids)
             {
-                Genre genre = await _genreManager.AddGenre("Kids").ConfigureAwait(false);
+                Genre genre = await _genreManager.AddGenreAsync("Kids").ConfigureAwait(false);
                 program.AddGenre(genre);
 
-                genre = await _genreManager.AddGenre("Children").ConfigureAwait(false);
+                genre = await _genreManager.AddGenreAsync("Children").ConfigureAwait(false);
                 program.AddGenre(genre);
             }
 
             if (timer.IsNews)
             {
-                Genre genre = await _genreManager.AddGenre("News").ConfigureAwait(false);
+                Genre genre = await _genreManager.AddGenreAsync("News").ConfigureAwait(false);
                 program.AddGenre(genre);
             }
 

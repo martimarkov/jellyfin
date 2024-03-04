@@ -176,7 +176,7 @@ namespace Emby.Server.Implementations.IO
                 // If the item has been deleted find the first valid parent that still exists
                 while (!Directory.Exists(item.Path) && !File.Exists(item.Path))
                 {
-                    item = item.GetOwner() ?? item.GetParent();
+                    item = (BaseItem?)(item.GetOwner() ?? item.GetParent());
 
                     if (item is null)
                     {

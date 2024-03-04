@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Interfaces;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Controller.Persistence;
@@ -70,7 +71,7 @@ namespace MediaBrowser.Controller.Library
         /// <param name="enablePathSubstitution">Option to enable path substitution.</param>
         /// <param name="user">User to use for operation.</param>
         /// <returns>List of media sources.</returns>
-        Task<List<MediaSourceInfo>> GetStaticMediaSources(BaseItem item, bool enablePathSubstitution, User user = null);
+        Task<List<MediaSourceInfo>> GetStaticMediaSources(IBaseItemMigration item, bool enablePathSubstitution, User user = null);
 
         /// <summary>
         /// Gets the static media source.

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Jellyfin.Data.Enums;
 using Jellyfin.Server.Implementations.Library.Interfaces;
 using Jellyfin.Server.Implementations.Library.Managers;
+using MediaBrowser.Common;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Library;
@@ -39,8 +40,9 @@ namespace Jellyfin.XbmcMetadata.Tests.Parsers
                 .Returns(new XbmcMetadataOptions());
             var user = new Mock<IUserManager>();
             var userData = new Mock<IUserDataManager>();
+            var appHost = new Mock<IApplicationHost>();
             var dbContextFactory = new InMemoryDbContextFactory();
-            var genreManager = new GenreManager(dbContextFactory);
+            var genreManager = new GenreManager(dbContextFactory, appHost.Object);
             var directoryService = new Mock<IDirectoryService>();
 
             _parser = new EpisodeNfoParser(

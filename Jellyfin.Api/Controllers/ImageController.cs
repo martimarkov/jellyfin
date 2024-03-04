@@ -13,6 +13,11 @@ using System.Threading.Tasks;
 using Jellyfin.Api.Attributes;
 using Jellyfin.Api.Constants;
 using Jellyfin.Api.Helpers;
+using Jellyfin.Data;
+using Jellyfin.Data.Entities.Libraries;
+using Jellyfin.Data.Enums;
+using Jellyfin.Data.Interfaces;
+using Jellyfin.Extensions;
 using MediaBrowser.Common.Api;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
@@ -901,14 +906,14 @@ public class ImageController : BaseJellyfinApiController
         [FromQuery] string? foregroundLayer,
         [FromQuery] int? imageIndex)
     {
-        var item = _libraryManager.GetGenre(name);
+        var item = await _libraryManager.GetGenreAsync(name).ConfigureAwait(false);
         if (item is null)
         {
             return NotFound();
         }
 
         return await GetImageInternal(
-                item.Id,
+                item.GetGuidId(),
                 imageType,
                 imageIndex,
                 tag,
@@ -981,14 +986,14 @@ public class ImageController : BaseJellyfinApiController
         [FromQuery] string? backgroundColor,
         [FromQuery] string? foregroundLayer)
     {
-        var item = _libraryManager.GetGenre(name);
+        var item = await _libraryManager.GetGenreAsync(name).ConfigureAwait(false);
         if (item is null)
         {
             return NotFound();
         }
 
         return await GetImageInternal(
-                item.Id,
+                item.GetGuidId(),
                 imageType,
                 imageIndex,
                 tag,
@@ -1907,7 +1912,7 @@ public class ImageController : BaseJellyfinApiController
         int? blur,
         string? backgroundColor,
         string? foregroundLayer,
-        BaseItem? item,
+        IBaseItemMigration? item,
         ItemImageInfo? imageInfo = null)
     {
         if (percentPlayed.HasValue)

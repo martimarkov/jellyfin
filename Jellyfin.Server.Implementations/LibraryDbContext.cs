@@ -34,6 +34,11 @@ public class LibraryDbContext : DbContext
     /// </summary>
     public DbSet<Genre> Genres => Set<Genre>();
 
+    /// <summary>
+    /// Gets the <see cref="DbSet{TEntity}"/> containing the Genres info.
+    /// </summary>
+    public DbSet<ItemImageInfo> ItemImageInfos => Set<ItemImageInfo>();
+
     /// <inheritdoc/>
     public override int SaveChanges()
     {

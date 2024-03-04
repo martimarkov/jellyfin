@@ -30,7 +30,7 @@ namespace MediaBrowser.Controller.Entities
             ExcludeItemIds = Array.Empty<Guid>();
             ExcludeItemTypes = Array.Empty<BaseItemKind>();
             ExcludeTags = Array.Empty<string>();
-            GenreIds = Array.Empty<Guid>();
+            GenreIds = Array.Empty<string>();
             Genres = Array.Empty<string>();
             GroupByPresentationUniqueKey = true;
             ImageTypes = Array.Empty<ImageType>();
@@ -168,7 +168,7 @@ namespace MediaBrowser.Controller.Entities
 
         public Guid[] StudioIds { get; set; }
 
-        public IReadOnlyList<Guid> GenreIds { get; set; }
+        public string[] GenreIds { get; set; }
 
         public ImageType[] ImageTypes { get; set; }
 

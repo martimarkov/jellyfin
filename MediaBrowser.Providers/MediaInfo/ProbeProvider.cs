@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Emby.Naming.Common;
+using Jellyfin.Server.Implementations.Library.Interfaces;
 using MediaBrowser.Controller.Chapters;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Entities;
@@ -60,6 +61,7 @@ namespace MediaBrowser.Providers.MediaInfo
         /// <param name="config">Instance of the <see cref="IServerConfigurationManager"/> interface.</param>
         /// <param name="subtitleManager">Instance of the <see cref="ISubtitleManager"/> interface.</param>
         /// <param name="chapterManager">Instance of the <see cref="IChapterManager"/> interface.</param>
+        /// <param name="genreManager">Instance of the <see cref="IGenreManager"/> interface.</param>
         /// <param name="libraryManager">Instance of the <see cref="ILibraryManager"/> interface.</param>
         /// <param name="loggerFactory">Instance of the <see cref="ILoggerFactory"/>.</param>
         /// <param name="fileSystem">Instance of the <see cref="IFileSystem"/> interface.</param>
@@ -74,6 +76,7 @@ namespace MediaBrowser.Providers.MediaInfo
             IServerConfigurationManager config,
             ISubtitleManager subtitleManager,
             IChapterManager chapterManager,
+            IGenreManager genreManager,
             ILibraryManager libraryManager,
             IFileSystem fileSystem,
             ILoggerFactory loggerFactory,
@@ -97,7 +100,8 @@ namespace MediaBrowser.Providers.MediaInfo
                 chapterManager,
                 libraryManager,
                 _audioResolver,
-                _subtitleResolver);
+                _subtitleResolver,
+                genreManager);
 
             _audioProber = new AudioFileProber(
                 loggerFactory.CreateLogger<AudioFileProber>(),

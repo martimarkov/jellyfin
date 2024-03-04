@@ -176,7 +176,7 @@ public class LibraryController : BaseJellyfinApiController
                 break;
             }
 
-            item = parent;
+            item = (BaseItem)parent;
         }
 
         var dtoOptions = new DtoOptions().AddClientFields(User);
@@ -243,7 +243,7 @@ public class LibraryController : BaseJellyfinApiController
                 break;
             }
 
-            item = parent;
+            item = (BaseItem)parent;
         }
 
         var dtoOptions = new DtoOptions().AddClientFields(User);
@@ -474,7 +474,7 @@ public class LibraryController : BaseJellyfinApiController
             : _userManager.GetUserById(userId.Value);
 
         var dtoOptions = new DtoOptions().AddClientFields(User);
-        BaseItem? parent = item.GetParent();
+        BaseItem? parent = (BaseItem?)item.GetParent();
 
         while (parent is not null)
         {
@@ -489,7 +489,7 @@ public class LibraryController : BaseJellyfinApiController
 
             baseItemDtos.Add(_dtoService.GetBaseItemDto(parent, dtoOptions, user));
 
-            parent = parent.GetParent();
+            parent = (BaseItem?)parent.GetParent();
         }
 
         return baseItemDtos;

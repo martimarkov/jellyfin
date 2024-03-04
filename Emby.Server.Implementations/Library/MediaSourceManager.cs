@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using AsyncKeyedLock;
 using Jellyfin.Data.Entities;
 using Jellyfin.Data.Enums;
+using Jellyfin.Data.Interfaces;
 using Jellyfin.Extensions;
 using Jellyfin.Extensions.Json;
 using MediaBrowser.Common.Configuration;
@@ -327,28 +328,30 @@ namespace Emby.Server.Implementations.Library
             return sources.FirstOrDefault(i => string.Equals(i.Id, mediaSourceId, StringComparison.OrdinalIgnoreCase));
         }
 
-        public async Task<List<MediaSourceInfo>> GetStaticMediaSources(BaseItem item, bool enablePathSubstitution, User user = null)
+        public async Task<List<MediaSourceInfo>> GetStaticMediaSources(IBaseItemMigration item, bool enablePathSubstitution, User user = null)
         {
             ArgumentNullException.ThrowIfNull(item);
 
             var hasMediaSources = (IHasMediaSources)item;
 
             var sources = hasMediaSources.GetMediaSources(enablePathSubstitution);
-
-            if (user is not null)
+            if (item is BaseItem baseItem)
             {
-                foreach (var source in sources)
+                if (user is not null)
                 {
-                    await SetDefaultAudioAndSubtitleStreamIndexes(item, source, user);
+                    foreach (var source in sources)
+                    {
+                        await SetDefaultAudioAndSubtitleStreamIndexes(baseItem, source, user).ConfigureAwait(false);
 
-                    if (item.MediaType == MediaType.Audio)
-                    {
-                        source.SupportsTranscoding = user.HasPermission(PermissionKind.EnableAudioPlaybackTranscoding);
-                    }
-                    else if (item.MediaType == MediaType.Video)
-                    {
-                        source.SupportsTranscoding = user.HasPermission(PermissionKind.EnableVideoPlaybackTranscoding);
-                        source.SupportsDirectStream = user.HasPermission(PermissionKind.EnablePlaybackRemuxing);
+                        if (baseItem.MediaType == MediaType.Audio)
+                        {
+                            source.SupportsTranscoding = user.HasPermission(PermissionKind.EnableAudioPlaybackTranscoding);
+                        }
+                        else if (baseItem.MediaType == MediaType.Video)
+                        {
+                            source.SupportsTranscoding = user.HasPermission(PermissionKind.EnableVideoPlaybackTranscoding);
+                            source.SupportsDirectStream = user.HasPermission(PermissionKind.EnablePlaybackRemuxing);
+                        }
                     }
                 }
             }

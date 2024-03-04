@@ -7,7 +7,9 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Entities.Libraries;
 using Jellyfin.Data.Enums;
+using Jellyfin.Data.Interfaces;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -20,7 +22,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Querying;
 using Episode = MediaBrowser.Controller.Entities.TV.Episode;
-using Genre = MediaBrowser.Controller.Entities.Genre;
+using Genre = Jellyfin.Data.Entities.Libraries.Genre;
 using Person = MediaBrowser.Controller.Entities.Person;
 
 namespace MediaBrowser.Controller.Library
@@ -118,6 +120,14 @@ namespace MediaBrowser.Controller.Library
         /// <param name="name">The name of the genre.</param>
         /// <returns>Task{Genre}.</returns>
         Genre GetGenre(string name);
+
+        /// <summary>
+        /// Gets a Genre.
+        /// </summary>
+        /// <param name="name">The name of the genre.</param>
+        /// <param name="slugChar">The slug character separator.</param>
+        /// <returns>Task{Genre}.</returns>
+        Task<Genre> GetGenreAsync(string name, char slugChar = default);
 
         /// <summary>
         /// Gets the genre.
@@ -518,7 +528,7 @@ namespace MediaBrowser.Controller.Library
         /// <param name="image">The image.</param>
         /// <param name="imageIndex">Index of the image.</param>
         /// <returns>Task.</returns>
-        Task<ItemImageInfo> ConvertImageToLocal(BaseItem item, ItemImageInfo image, int imageIndex);
+        Task<ItemImageInfo> ConvertImageToLocal(IBaseItemMigration item, ItemImageInfo image, int imageIndex);
 
         /// <summary>
         /// Gets the items.

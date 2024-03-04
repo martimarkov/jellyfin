@@ -1,5 +1,6 @@
 #pragma warning disable CS1591
 
+using Jellyfin.Data.Enums;
 using MediaBrowser.Model.Entities;
 
 namespace MediaBrowser.Model.Providers

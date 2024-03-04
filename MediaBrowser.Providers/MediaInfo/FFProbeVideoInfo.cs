@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Data.Entities;
+using Jellyfin.Server.Implementations.Library.Interfaces;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Chapters;
 using MediaBrowser.Controller.Configuration;
@@ -45,6 +46,7 @@ namespace MediaBrowser.Providers.MediaInfo
         private readonly AudioResolver _audioResolver;
         private readonly SubtitleResolver _subtitleResolver;
         private readonly IMediaSourceManager _mediaSourceManager;
+        private readonly IGenreManager _genreManager;
 
         public FFProbeVideoInfo(
             ILogger<FFProbeVideoInfo> logger,
@@ -59,7 +61,8 @@ namespace MediaBrowser.Providers.MediaInfo
             IChapterManager chapterManager,
             ILibraryManager libraryManager,
             AudioResolver audioResolver,
-            SubtitleResolver subtitleResolver)
+            SubtitleResolver subtitleResolver,
+            IGenreManager genreManager)
         {
             _logger = logger;
             _mediaSourceManager = mediaSourceManager;
@@ -74,6 +77,7 @@ namespace MediaBrowser.Providers.MediaInfo
             _libraryManager = libraryManager;
             _audioResolver = audioResolver;
             _subtitleResolver = subtitleResolver;
+            _genreManager = genreManager;
         }
 
         public async Task<ItemUpdateType> ProbeVideo<T>(
@@ -414,7 +418,7 @@ namespace MediaBrowser.Providers.MediaInfo
 
                     foreach (var genreName in data.Genres)
                     {
-                        Genre genre = new Genre(genreName);
+                        Genre genre = _genreManager.AddGenre(genreName);
                         video.AddGenre(genre);
                     }
                 }

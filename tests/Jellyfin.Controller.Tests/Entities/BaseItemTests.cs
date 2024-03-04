@@ -1,3 +1,4 @@
+using Jellyfin.Data;
 using MediaBrowser.Controller.Entities;
 using Xunit;
 
@@ -13,5 +14,5 @@ public class BaseItemTests
     [InlineData("test1", "test0000000001")]
     [InlineData("1test 2", "0000000001test 0000000002")]
     public void BaseItem_ModifySortChunks_Valid(string input, string expected)
-        => Assert.Equal(expected, BaseItem.ModifySortChunks(input));
+        => Assert.Equal(expected, BaseItemHelpers.ModifySortChunks(input));
 }

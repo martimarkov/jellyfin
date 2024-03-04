@@ -346,7 +346,7 @@ public class ItemsController : BaseJellyfinApiController
                 ArtistIds = artistIds,
                 AlbumArtistIds = albumArtistIds,
                 ContributingArtistIds = contributingArtistIds,
-                GenreIds = genreIds,
+                GenreIds = genreIds.Select(genreId => genreId.GetIntId()).ToArray(),
                 StudioIds = studioIds,
                 Person = person,
                 PersonIds = personIds,

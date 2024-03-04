@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,8 @@ using Jellyfin.Api.ModelBinders;
 using Jellyfin.Data.Entities;
 using Jellyfin.Data.Enums;
 using Jellyfin.Extensions;
+using Jellyfin.Server.Implementations;
+using Jellyfin.Server.Implementations.Library.Interfaces;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
@@ -23,6 +26,7 @@ using MediaBrowser.Model.Querying;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Genre = Jellyfin.Data.Entities.Libraries.Genre;
 
 namespace Jellyfin.Api.Controllers;
 
@@ -36,6 +40,7 @@ public class UserLibraryController : BaseJellyfinApiController
     private readonly IUserManager _userManager;
     private readonly IUserDataManager _userDataRepository;
     private readonly ILibraryManager _libraryManager;
+    private readonly IGenreManager _genreManager;
     private readonly IDtoService _dtoService;
     private readonly IUserViewManager _userViewManager;
     private readonly IFileSystem _fileSystem;
@@ -47,6 +52,7 @@ public class UserLibraryController : BaseJellyfinApiController
     /// <param name="userManager">Instance of the <see cref="IUserManager"/> interface.</param>
     /// <param name="userDataRepository">Instance of the <see cref="IUserDataManager"/> interface.</param>
     /// <param name="libraryManager">Instance of the <see cref="ILibraryManager"/> interface.</param>
+    /// <param name="genreManager">Instance of the <see cref="IGenreManager"/> interface.</param>
     /// <param name="dtoService">Instance of the <see cref="IDtoService"/> interface.</param>
     /// <param name="userViewManager">Instance of the <see cref="IUserViewManager"/> interface.</param>
     /// <param name="fileSystem">Instance of the <see cref="IFileSystem"/> interface.</param>
@@ -55,6 +61,7 @@ public class UserLibraryController : BaseJellyfinApiController
         IUserManager userManager,
         IUserDataManager userDataRepository,
         ILibraryManager libraryManager,
+        IGenreManager genreManager,
         IDtoService dtoService,
         IUserViewManager userViewManager,
         IFileSystem fileSystem,
@@ -63,6 +70,7 @@ public class UserLibraryController : BaseJellyfinApiController
         _userManager = userManager;
         _userDataRepository = userDataRepository;
         _libraryManager = libraryManager;
+        _genreManager = genreManager;
         _dtoService = dtoService;
         _userViewManager = userViewManager;
         _fileSystem = fileSystem;
@@ -86,27 +94,50 @@ public class UserLibraryController : BaseJellyfinApiController
             return NotFound();
         }
 
-        var item = itemId.IsEmpty()
+        var baseItem = itemId.IsEmpty()
             ? _libraryManager.GetUserRootFolder()
             : _libraryManager.GetItemById(itemId);
 
-        if (item is null)
+        ILibraryModel? efItem = null;
+        BaseItemKind? baseItemKind = null;
+        // This means that the item is migrated to EF Core
+        if (itemId.ToString().StartsWith("99999999", StringComparison.Ordinal))
         {
-            return NotFound();
-        }
+            string[] sections = itemId.ToString().Split('-');
+            baseItemKind = (BaseItemKind)Enum.Parse(typeof(BaseItemKind), sections[3]);
+            int realId = int.Parse(sections[4], CultureInfo.InvariantCulture);
 
-        if (item is not UserRootFolder
-            // Check the item is visible for the user
-            && !item.IsVisible(user))
-        {
-            return Unauthorized($"{user.Username} is not permitted to access item {item.Name}.");
+            switch (baseItemKind)
+            {
+                case BaseItemKind.Genre:
+                    efItem = await _genreManager.GetGenreByIdAsync(realId).ConfigureAwait(false);
+                    break;
+            }
         }
-
-        await RefreshItemOnDemandIfNeeded(item).ConfigureAwait(false);
 
         var dtoOptions = new DtoOptions().AddClientFields(User);
 
-        return _dtoService.GetBaseItemDto(item, dtoOptions, user);
+        if (baseItem is not null)
+        {
+            if (baseItem is not UserRootFolder
+                // Check the item is visible for the user
+                && !baseItem.IsVisible(user))
+            {
+                return Unauthorized($"{user.Username} is not permitted to access item {baseItem.Name}.");
+            }
+
+            await RefreshItemOnDemandIfNeeded(baseItem).ConfigureAwait(false);
+
+            return _dtoService.GetBaseItemDto(baseItem, dtoOptions, user);
+        }
+
+        if (efItem is not null)
+        {
+            // TODO: Check for visibility && permissions
+            return _dtoService.GetBaseItemDto(efItem, dtoOptions, user);
+        }
+
+        return NotFound();
     }
 
     /// <summary>

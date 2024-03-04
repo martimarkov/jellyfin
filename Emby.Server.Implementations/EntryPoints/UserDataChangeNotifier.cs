@@ -100,7 +100,12 @@ namespace Emby.Server.Implementations.EntryPoints
 
                     if (parent is not null)
                     {
-                        keys.Add(parent);
+                        if (baseItem is not BaseItem)
+                        {
+                            throw new NotImplementedException();
+                        }
+
+                        keys.Add((BaseItem)parent);
                     }
                 }
             }

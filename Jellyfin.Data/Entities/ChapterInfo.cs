@@ -41,5 +41,9 @@ namespace Jellyfin.Data.Entities
         public string? ImagePath { get; set; }
 
         public DateTime ImageDateModified { get; set; }
+
+        public DateTime DateCreated { get; set; }
+
+        public DateTime DateModified { get; set; }
     }
 }

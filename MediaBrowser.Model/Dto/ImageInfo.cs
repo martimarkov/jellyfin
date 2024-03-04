@@ -1,4 +1,5 @@
 #nullable disable
+using Jellyfin.Data.Enums;
 using MediaBrowser.Model.Entities;
 
 namespace MediaBrowser.Model.Dto

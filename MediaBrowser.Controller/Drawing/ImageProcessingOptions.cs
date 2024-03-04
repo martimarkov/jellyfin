@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Jellyfin.Data.Entities.Libraries;
+using Jellyfin.Data.Interfaces;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Drawing;
 
@@ -20,7 +22,7 @@ namespace MediaBrowser.Controller.Drawing
 
         public Guid ItemId { get; set; }
 
-        public BaseItem Item { get; set; }
+        public IBaseItemMigration Item { get; set; }
 
         public ItemImageInfo Image { get; set; }
 

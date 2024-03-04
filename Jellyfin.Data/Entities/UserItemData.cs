@@ -28,6 +28,10 @@ namespace Jellyfin.Data.Entities
 
         public string? Key { get; set; }
 
+        public DateTime DateCreated { get; set; }
+
+        public DateTime DateModified { get; set; }
+
         /// <summary>
         /// Gets or sets the users 0-10 rating.
         /// </summary>

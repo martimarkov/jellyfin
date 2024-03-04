@@ -2,6 +2,7 @@
 using System.IO;
 using Emby.Server.Implementations.Data;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Entities.Libraries;
 using Jellyfin.Data.Enums;
 using Jellyfin.Extensions.Json;
 using Jellyfin.Server.Implementations;

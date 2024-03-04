@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncKeyedLock;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Interfaces;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Drawing;
@@ -349,7 +350,7 @@ public class TrickplayManager : ITrickplayManager
     }
 
     /// <inheritdoc />
-    public async Task<Dictionary<string, Dictionary<int, TrickplayInfo>>> GetTrickplayManifest(BaseItem item)
+    public async Task<Dictionary<string, Dictionary<int, TrickplayInfo>>> GetTrickplayManifest(IHasMediaSources item)
     {
         var trickplayManifest = new Dictionary<string, Dictionary<int, TrickplayInfo>>();
         foreach (var mediaSource in item.GetMediaSources(false))

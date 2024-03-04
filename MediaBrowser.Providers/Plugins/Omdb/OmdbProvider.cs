@@ -418,7 +418,7 @@ namespace MediaBrowser.Providers.Plugins.Omdb
 
                 foreach (var genreName in result.Genre.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
                 {
-                    Genre genre = await _genreManager.AddGenre(genreName).ConfigureAwait(false);
+                    Genre genre = await _genreManager.AddGenreAsync(genreName).ConfigureAwait(false);
                     item.AddGenre(genre);
                 }
             }

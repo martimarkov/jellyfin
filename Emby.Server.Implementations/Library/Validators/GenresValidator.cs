@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Server.Implementations.Library.Interfaces;
 using MediaBrowser.Controller.Library;
 using MediaBrowser.Controller.Persistence;
 using Microsoft.Extensions.Logging;
@@ -16,7 +17,7 @@ namespace Emby.Server.Implementations.Library.Validators
         /// The library manager.
         /// </summary>
         private readonly ILibraryManager _libraryManager;
-        private readonly IItemRepository _itemRepo;
+        private readonly IGenreManager _genreManager;
 
         /// <summary>
         /// The logger.
@@ -28,12 +29,12 @@ namespace Emby.Server.Implementations.Library.Validators
         /// </summary>
         /// <param name="libraryManager">The library manager.</param>
         /// <param name="logger">The logger.</param>
-        /// <param name="itemRepo">The item repository.</param>
-        public GenresValidator(ILibraryManager libraryManager, ILogger<GenresValidator> logger, IItemRepository itemRepo)
+        /// <param name="genreManager">The genre manager.</param>
+        public GenresValidator(ILibraryManager libraryManager, ILogger<GenresValidator> logger, IGenreManager genreManager)
         {
             _libraryManager = libraryManager;
             _logger = logger;
-            _itemRepo = itemRepo;
+            _genreManager = genreManager;
         }
 
         /// <summary>
@@ -44,18 +45,16 @@ namespace Emby.Server.Implementations.Library.Validators
         /// <returns>Task.</returns>
         public async Task Run(IProgress<double> progress, CancellationToken cancellationToken)
         {
-            var names = _itemRepo.GetGenreNames();
+            var genres = await _genreManager.GetGenresAsync().ConfigureAwait(false);
 
             var numComplete = 0;
-            var count = names.Count;
+            var count = genres.Count;
 
-            foreach (var name in names)
+            foreach (var item in genres)
             {
                 try
                 {
-                    var item = _libraryManager.GetGenre(name);
-
-                    await item.RefreshMetadata(cancellationToken).ConfigureAwait(false);
+                    await _genreManager.RefreshMetadataAsync(item).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -64,7 +63,7 @@ namespace Emby.Server.Implementations.Library.Validators
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error refreshing {GenreName}", name);
+                    _logger.LogError(ex, "Error refreshing {GenreName}", item.Name);
                 }
 
                 numComplete++;

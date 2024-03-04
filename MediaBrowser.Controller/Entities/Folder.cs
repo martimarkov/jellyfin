@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Jellyfin.Data.Entities;
 using Jellyfin.Data.Enums;
+using Jellyfin.Data.Interfaces;
 using Jellyfin.Extensions;
 using MediaBrowser.Controller.Channels;
 using MediaBrowser.Controller.Collections;
@@ -1110,7 +1111,7 @@ namespace MediaBrowser.Controller.Entities
                 return false;
             }
 
-            if (request.GenreIds.Count > 0)
+            if (request.GenreIds.Length > 0)
             {
                 return false;
             }
@@ -1215,7 +1216,7 @@ namespace MediaBrowser.Controller.Entities
                 return false;
             }
 
-            if (request.GenreIds.Count > 0)
+            if (request.GenreIds.Length > 0)
             {
                 return false;
             }
@@ -1501,10 +1502,10 @@ namespace MediaBrowser.Controller.Entities
 
                 if (child is not IItemByName)
                 {
-                    var childProtocol = childOwner.PathProtocol;
+                    var childProtocol = ((BaseItem)childOwner).PathProtocol;
                     if (!childProtocol.HasValue || childProtocol.Value != Model.MediaInfo.MediaProtocol.File)
                     {
-                        if (!childOwner.IsVisibleStandalone(user))
+                        if (!((BaseItem)childOwner).IsVisibleStandalone(user))
                         {
                             continue;
                         }
@@ -1512,7 +1513,7 @@ namespace MediaBrowser.Controller.Entities
                     else
                     {
                         var itemCollectionFolderIds =
-                            LibraryManager.GetCollectionFolders(childOwner, allUserRootChildren).Select(f => f.Id);
+                            LibraryManager.GetCollectionFolders((BaseItem)childOwner, allUserRootChildren).Select(f => f.Id);
 
                         if (!itemCollectionFolderIds.Any(collectionFolderIds.Contains))
                         {

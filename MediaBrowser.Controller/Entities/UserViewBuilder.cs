@@ -275,7 +275,7 @@ namespace MediaBrowser.Controller.Entities
         {
             query.Recursive = true;
             query.Parent = queryParent;
-            query.GenreIds = new[] { displayParent.Id };
+            query.GenreIds = new[] { displayParent.Id }.Select(genreId => genreId.GetIntId()).ToArray();
             query.SetUser(user);
 
             query.IncludeItemTypes = new[] { BaseItemKind.Movie };
@@ -403,7 +403,7 @@ namespace MediaBrowser.Controller.Entities
         {
             query.Recursive = true;
             query.Parent = queryParent;
-            query.GenreIds = new[] { displayParent.Id };
+            query.GenreIds = new[] { displayParent.Id }.Select(genreId => genreId.GetIntId()).ToArray();
             query.SetUser(user);
 
             query.IncludeItemTypes = new[] { BaseItemKind.Series };
@@ -800,7 +800,7 @@ namespace MediaBrowser.Controller.Entities
             }
 
             // Apply genre filter
-            if (query.GenreIds.Count > 0 && !query.GenreIds.Any(id =>
+            if (query.GenreIds.Length > 0 && !query.GenreIds.Any(id =>
             {
                 var genreItem = libraryManager.GetItemById(id);
                 return genreItem is not null && item.Genres.Contains(genreItem.Name, StringComparison.OrdinalIgnoreCase);

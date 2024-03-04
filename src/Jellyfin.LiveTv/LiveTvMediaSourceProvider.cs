@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Data.Enums;
 using Jellyfin.LiveTv.IO;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller;

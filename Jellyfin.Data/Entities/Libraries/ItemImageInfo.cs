@@ -1,13 +1,24 @@
 #pragma warning disable CS1591
 
 using System;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
-using MediaBrowser.Model.Entities;
+using Jellyfin.Data.Enums;
+using Jellyfin.Server.Implementations;
 
-namespace MediaBrowser.Controller.Entities
+namespace Jellyfin.Data.Entities.Libraries
 {
-    public class ItemImageInfo
+    public class ItemImageInfo : ILibraryModel
     {
+        /// <summary>
+        /// Gets the id.
+        /// </summary>
+        /// <remarks>
+        /// Identity, Indexed, Required.
+        /// </remarks>
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; private set; }
+
         /// <summary>
         /// Gets or sets the path.
         /// </summary>
@@ -19,6 +30,8 @@ namespace MediaBrowser.Controller.Entities
         /// </summary>
         /// <value>The type.</value>
         public ImageType Type { get; set; }
+
+        public DateTime DateCreated { get; set; }
 
         /// <summary>
         /// Gets or sets the date modified.

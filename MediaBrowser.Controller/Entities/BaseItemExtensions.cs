@@ -2,7 +2,9 @@
 
 using System;
 using System.Linq;
-using MediaBrowser.Model.Entities;
+using Jellyfin.Data.Entities.Libraries;
+using Jellyfin.Data.Enums;
+using Jellyfin.Data.Interfaces;
 using MediaBrowser.Model.IO;
 
 namespace MediaBrowser.Controller.Entities
@@ -15,7 +17,7 @@ namespace MediaBrowser.Controller.Entities
         /// <param name="item">The item.</param>
         /// <param name="imageType">Type of the image.</param>
         /// <returns>System.String.</returns>
-        public static string GetImagePath(this BaseItem item, ImageType imageType)
+        public static string GetImagePath(this IBaseItemMigration item, ImageType imageType)
         {
             return item.GetImagePath(imageType, 0);
         }

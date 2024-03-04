@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Interfaces;
 using MediaBrowser.Controller.Configuration;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
@@ -12,6 +14,7 @@ using MediaBrowser.Controller.Library;
 using MediaBrowser.Model.Dto;
 using MediaBrowser.Model.Entities;
 using Microsoft.EntityFrameworkCore;
+using Genre = Jellyfin.Data.Entities.Libraries.Genre;
 
 namespace Jellyfin.Server.Implementations.UserData;
 
@@ -160,18 +163,32 @@ public class UserDataManager : IUserDataManager
     }
 
     /// <inheritdoc />
-    public async Task<UserItemData?> GetUserDataAsync(User? user, BaseItem item)
+    public async Task<UserItemData?> GetUserDataAsync(User? user, IBaseItemMigration item)
     {
         ArgumentNullException.ThrowIfNull(user);
         ArgumentNullException.ThrowIfNull(item);
         var dbContext = await _provider.CreateDbContextAsync().ConfigureAwait(false);
         UserItemData? userItemData;
+        string itemId;
+        if (item.IsBaseItem)
+        {
+            itemId = ((BaseItem)item).Id.ToString();
+        }
+        else if (item is IHasIntId itemWitId)
+        {
+            itemId = itemWitId.Id.ToString(CultureInfo.InvariantCulture);
+        }
+        else
+        {
+            throw new NotSupportedException();
+        }
+
         await using (dbContext.ConfigureAwait(false))
         {
-            userItemData = await dbContext.UserDatas.Where(u => u.UserId.Equals(user.Id) && u.Key == item.Id.ToString()).FirstOrDefaultAsync().ConfigureAwait(false) ?? new UserItemData
+            userItemData = await dbContext.UserDatas.Where(u => u.UserId.Equals(user.Id) && u.Key == itemId).FirstOrDefaultAsync().ConfigureAwait(false) ?? new UserItemData
             {
                 UserId = user.Id,
-                Key = item.Id.ToString()
+                Key = itemId
             };
         }
 
@@ -188,29 +205,32 @@ public class UserDataManager : IUserDataManager
     }
 
     /// <inheritdoc />
-    public UserItemDataDto GetUserDataDto(BaseItem item, User user)
+    public UserItemDataDto GetUserDataDto(IBaseItemMigration item, User user)
     {
         return GetUserDataDtoAsync(item, null, user, new DtoOptions()).GetAwaiter().GetResult();
     }
 
     /// <inheritdoc />
-    public async Task<UserItemDataDto> GetUserDataDtoAsync(BaseItem item, User user)
+    public async Task<UserItemDataDto> GetUserDataDtoAsync(IBaseItemMigration item, User user)
     {
         return await GetUserDataDtoAsync(item, null, user, new DtoOptions()).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
-    public async Task<UserItemDataDto> GetUserDataDtoAsync(BaseItem item, BaseItemDto? itemDto, User user, DtoOptions options)
+    public async Task<UserItemDataDto> GetUserDataDtoAsync(IBaseItemMigration item, BaseItemDto? itemDto, User user, DtoOptions options)
     {
          var userData = await GetUserDataAsync(user, item).ConfigureAwait(false);
          var dto = GetUserItemDataDto(userData);
+         if (item.IsBaseItem)
+         {
+             ((BaseItem)item).FillUserDataDtoValues(dto, userData, itemDto, user, options);
+         }
 
-         item.FillUserDataDtoValues(dto, userData, itemDto, user, options);
          return dto;
     }
 
     /// <inheritdoc />
-    public UserItemDataDto GetUserDataDto(BaseItem item, BaseItemDto? itemDto, User user, DtoOptions options)
+    public UserItemDataDto GetUserDataDto(IBaseItemMigration item, BaseItemDto? itemDto, User user, DtoOptions options)
     {
         return GetUserDataDtoAsync(item, itemDto, user, options).GetAwaiter().GetResult();
     }

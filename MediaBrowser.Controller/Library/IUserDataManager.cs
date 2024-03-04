@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Interfaces;
 using MediaBrowser.Controller.Dto;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Model.Dto;
@@ -60,7 +61,7 @@ namespace MediaBrowser.Controller.Library
         /// <param name="user">The user.</param>
         /// <param name="item">The BaseItem.</param>
         /// <returns>The User data.</returns>
-        Task<UserItemData> GetUserDataAsync(User user, BaseItem item);
+        Task<UserItemData> GetUserDataAsync(User user, IBaseItemMigration item);
 
         /// <summary>
         /// Gets the user data dto.
@@ -68,7 +69,7 @@ namespace MediaBrowser.Controller.Library
         /// <param name="item">Item to use.</param>
         /// <param name="user">User to use.</param>
         /// <returns>User data dto.</returns>
-        UserItemDataDto GetUserDataDto(BaseItem item, User user);
+        UserItemDataDto GetUserDataDto(IBaseItemMigration item, User user);
 
         /// <summary>
         /// Gets the user data dto.
@@ -76,11 +77,11 @@ namespace MediaBrowser.Controller.Library
         /// <param name="item">Item to use.</param>
         /// <param name="user">User to use.</param>
         /// <returns>User data dto.</returns>
-        Task<UserItemDataDto> GetUserDataDtoAsync(BaseItem item, User user);
+        Task<UserItemDataDto> GetUserDataDtoAsync(IBaseItemMigration item, User user);
 
-        UserItemDataDto GetUserDataDto(BaseItem item, BaseItemDto itemDto, User user, DtoOptions options);
+        UserItemDataDto GetUserDataDto(IBaseItemMigration item, BaseItemDto itemDto, User user, DtoOptions options);
 
-        Task<UserItemDataDto> GetUserDataDtoAsync(BaseItem item, BaseItemDto itemDto, User user, DtoOptions options);
+        Task<UserItemDataDto> GetUserDataDtoAsync(IBaseItemMigration item, BaseItemDto itemDto, User user, DtoOptions options);
 
         /// <summary>
         /// Get all user data for the given user.

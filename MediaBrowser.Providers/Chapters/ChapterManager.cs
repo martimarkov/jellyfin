@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Jellyfin.Data;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Interfaces;
 using Jellyfin.Server.Implementations;
 using MediaBrowser.Controller.Chapters;
 using MediaBrowser.Controller.Entities;
@@ -23,26 +25,26 @@ namespace MediaBrowser.Providers.Chapters
         }
 
         /// <inheritdoc />
-        public async Task<List<ChapterInfo>> GetChapters(BaseItem item, CancellationToken cancellationToken)
+        public async Task<List<ChapterInfo>> GetChapters(IBaseItemMigration item, CancellationToken cancellationToken)
         {
             List<ChapterInfo> chapters;
             var dbContext = await _provider.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
             await using (dbContext.ConfigureAwait(false))
             {
-                chapters = dbContext.ChapterInfos.Where(p => p.ItemId.Equals(item.Id)).ToList();
+                chapters = dbContext.ChapterInfos.Where(p => p.ItemId.Equals(item.GetGuidId())).ToList();
             }
 
             return chapters;
         }
 
         /// <inheritdoc />
-        public async Task<ChapterInfo?> GetChapter(BaseItem item, int chapterIndex, CancellationToken cancellationToken)
+        public async Task<ChapterInfo?> GetChapter(IBaseItemMigration item, int chapterIndex, CancellationToken cancellationToken)
         {
             ChapterInfo? chapter;
             var dbContext = await _provider.CreateDbContextAsync(cancellationToken).ConfigureAwait(false);
             await using (dbContext.ConfigureAwait(false))
             {
-                chapter = await dbContext.ChapterInfos.FirstOrDefaultAsync(p => p.ItemId.Equals(item.Id) && p.ChapterIndex == chapterIndex, cancellationToken: cancellationToken).ConfigureAwait(false);
+                chapter = await dbContext.ChapterInfos.FirstOrDefaultAsync(p => p.ItemId.Equals(item.GetGuidId()) && p.ChapterIndex == chapterIndex, cancellationToken: cancellationToken).ConfigureAwait(false);
             }
 
             return chapter;

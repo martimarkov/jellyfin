@@ -9,6 +9,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using AsyncKeyedLock;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Entities.Libraries;
+using Jellyfin.Data.Enums;
+using Jellyfin.Data.Interfaces;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Configuration;
@@ -116,7 +119,7 @@ public sealed class ImageProcessor : IImageProcessor, IDisposable
     public async Task<(string Path, string? MimeType, DateTime DateModified)> ProcessImage(ImageProcessingOptions options)
     {
         ItemImageInfo originalImage = options.Image;
-        BaseItem item = options.Item;
+        IBaseItemMigration item = options.Item;
 
         string originalImagePath = originalImage.Path;
         DateTime dateModified = originalImage.DateModified;
@@ -351,7 +354,7 @@ public sealed class ImageProcessor : IImageProcessor, IDisposable
     }
 
     /// <inheritdoc />
-    public ImageDimensions GetImageDimensions(BaseItem item, ItemImageInfo info)
+    public ImageDimensions GetImageDimensions(IBaseItemMigration item, ItemImageInfo info)
     {
         int width = info.Width;
         int height = info.Height;
@@ -403,11 +406,18 @@ public sealed class ImageProcessor : IImageProcessor, IDisposable
     }
 
     /// <inheritdoc />
-    public string GetImageCacheTag(BaseItem item, ItemImageInfo image)
-        => (item.Path + image.DateModified.Ticks).GetMD5().ToString("N", CultureInfo.InvariantCulture);
+    public string GetImageCacheTag(IBaseItemMigration item, ItemImageInfo image)
+    {
+        if (item is BaseItem baseItem)
+        {
+            return (baseItem.Path + image.DateModified.Ticks).GetMD5().ToString("N", CultureInfo.InvariantCulture);
+        }
+
+        throw new NotImplementedException();
+    }
 
     /// <inheritdoc />
-    public string? GetImageCacheTag(BaseItem item, ChapterInfo chapter)
+    public string? GetImageCacheTag(IBaseItemMigration item, ChapterInfo chapter)
     {
         if (chapter.ImagePath is null)
         {

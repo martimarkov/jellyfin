@@ -558,7 +558,7 @@ namespace Emby.Server.Implementations.Playlists
                             DeleteFileLocation = false,
                             DeleteFromExternalProvider = false
                         },
-                        playlist.GetParent(),
+                        (BaseItem)playlist.GetParent(),
                         false);
                 }
             }

@@ -14,6 +14,7 @@ using System.Text.Json;
 using System.Threading;
 using Emby.Server.Implementations.Playlists;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Entities.Libraries;
 using Jellyfin.Data.Enums;
 using Jellyfin.Extensions;
 using Jellyfin.Extensions.Json;
@@ -24,7 +25,6 @@ using MediaBrowser.Controller.Drawing;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Audio;
 using MediaBrowser.Controller.Entities.Movies;
-using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Extensions;
 using MediaBrowser.Controller.LiveTv;
 using MediaBrowser.Controller.Persistence;
@@ -37,6 +37,16 @@ using MediaBrowser.Model.Querying;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Book = MediaBrowser.Controller.Entities.Book;
+using Episode = MediaBrowser.Controller.Entities.TV.Episode;
+using Genre = MediaBrowser.Controller.Entities.Genre;
+using MetadataProvider = MediaBrowser.Model.Entities.MetadataProvider;
+using Movie = MediaBrowser.Controller.Entities.Movies.Movie;
+using MusicAlbum = MediaBrowser.Controller.Entities.Audio.MusicAlbum;
+using Person = MediaBrowser.Controller.Entities.Person;
+using Photo = MediaBrowser.Controller.Entities.Photo;
+using Season = MediaBrowser.Controller.Entities.TV.Season;
+using Series = MediaBrowser.Controller.Entities.TV.Series;
 
 namespace Emby.Server.Implementations.Data
 {
@@ -46,7 +56,7 @@ namespace Emby.Server.Implementations.Data
     public class SqliteItemRepository : BaseSqliteRepository, IItemRepository
     {
         private const string FromText = " from TypedBaseItems A";
-        private const string ChaptersTableName = "ChaptersInfo";
+        private const string ChaptersTableName = "ChapterInfos";
 
         private const string SaveItemCommandText =
             @"replace into TypedBaseItems
@@ -2126,6 +2136,7 @@ namespace Emby.Server.Implementations.Data
                 columns.Add("UserDatas.isFavorite");
                 columns.Add("UserDatas.played");
                 columns.Add("UserDatas.rating");
+                columns.Add("UserDatas.DateModified");
             }
 
             if (query.SimilarTo is not null)
@@ -3511,15 +3522,18 @@ namespace Emby.Server.Implementations.Data
                 clauseBuilder.Length = 0;
             }
 
-            if (query.GenreIds.Count > 0)
+            if (query.GenreIds.Length > 0)
             {
                 clauseBuilder.Append('(');
-                for (var i = 0; i < query.GenreIds.Count; i++)
+                for (var i = 0; i < query.GenreIds.Length; i++)
                 {
-                    clauseBuilder.Append("(guid in (select itemid from ItemValues where CleanValue = (select CleanName from TypedBaseItems where guid=@GenreId")
-                        .Append(i)
+                    string variableName = $"GenreId{i}";
+                    // TODO: Maybe there could be an SQL injection issue here when we are getting the Name?
+                    clauseBuilder
+                        .Append("(guid in (select itemid from ItemValues where CleanValue = (select LOWER(Name) from Genres where Id=@")
+                        .Append(variableName)
                         .Append(") and Type=2)) OR ");
-                    statement?.TryBind("@GenreId" + i, query.GenreIds[i]);
+                    statement?.TryBind($"@{variableName}", query.GenreIds[i]);
                 }
 
                 clauseBuilder.Length -= Or.Length;

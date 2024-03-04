@@ -92,7 +92,7 @@ namespace Emby.Server.Implementations.Library
             {
                 IncludeItemTypes = new[] { BaseItemKind.Audio },
 
-                GenreIds = genreIds.ToArray(),
+                GenreIds = genreIds.Select(genreId => genreId.GetIntId()).ToArray(),
 
                 Limit = 200,
 

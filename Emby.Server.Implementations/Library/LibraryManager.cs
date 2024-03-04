@@ -18,10 +18,14 @@ using Emby.Server.Implementations.Library.Resolvers;
 using Emby.Server.Implementations.Library.Validators;
 using Emby.Server.Implementations.Playlists;
 using Emby.Server.Implementations.ScheduledTasks.Tasks;
+using Jellyfin.Data;
 using Jellyfin.Data.Entities;
+using Jellyfin.Data.Entities.Libraries;
 using Jellyfin.Data.Enums;
+using Jellyfin.Data.Interfaces;
 using Jellyfin.Extensions;
 using Jellyfin.Server.Implementations;
+using Jellyfin.Server.Implementations.Library.Interfaces;
 using MediaBrowser.Common.Extensions;
 using MediaBrowser.Controller;
 using MediaBrowser.Controller.Chapters;
@@ -47,12 +51,11 @@ using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Library;
 using MediaBrowser.Model.Querying;
 using MediaBrowser.Model.Tasks;
-using MediaBrowser.Providers.Chapters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Episode = MediaBrowser.Controller.Entities.TV.Episode;
 using EpisodeInfo = Emby.Naming.TV.EpisodeInfo;
-using Genre = MediaBrowser.Controller.Entities.Genre;
+using Genre = Jellyfin.Data.Entities.Libraries.Genre;
 using Person = MediaBrowser.Controller.Entities.Person;
 using VideoResolver = Emby.Naming.Video.VideoResolver;
 
@@ -83,6 +86,7 @@ namespace Emby.Server.Implementations.Library
         private readonly ExtraResolver _extraResolver;
         private readonly IDbContextFactory<LibraryDbContext> _provider;
         private readonly IChapterManager _chapterManager;
+        private readonly IGenreManager _genreManager;
 
         /// <summary>
         /// The _root folder sync lock.
@@ -120,6 +124,7 @@ namespace Emby.Server.Implementations.Library
         /// <param name="directoryService">The directory service.</param>
         /// <param name="provider">The LibraryDB Provider.</param>
         /// <param name="chapterManager">The ChapterManager.</param>
+        /// <param name="genreManager">The GenreManager.</param>
         public LibraryManager(
             IServerApplicationHost appHost,
             ILoggerFactory loggerFactory,
@@ -137,7 +142,8 @@ namespace Emby.Server.Implementations.Library
             NamingOptions namingOptions,
             IDirectoryService directoryService,
             IDbContextFactory<LibraryDbContext> provider,
-            IChapterManager chapterManager)
+            IChapterManager chapterManager,
+            IGenreManager genreManager)
         {
             _appHost = appHost;
             _logger = loggerFactory.CreateLogger<LibraryManager>();
@@ -160,6 +166,7 @@ namespace Emby.Server.Implementations.Library
             _configurationManager.ConfigurationUpdated += ConfigurationUpdated;
             _provider = provider;
             _chapterManager = chapterManager;
+            _genreManager = genreManager;
 
             RecordConfigurationValues(configurationManager.Configuration);
         }
@@ -321,7 +328,7 @@ namespace Emby.Server.Implementations.Library
         {
             ArgumentNullException.ThrowIfNull(item);
 
-            var parent = item.GetOwner() ?? item.GetParent();
+            var parent = (BaseItem)(item.GetOwner() ?? item.GetParent());
 
             DeleteItem(item, options, parent, notifyParentItem);
         }
@@ -874,7 +881,7 @@ namespace Emby.Server.Implementations.Library
 
         public Guid GetGenreId(string name)
         {
-            return GetItemByNameId<Genre>(Genre.GetPath(name));
+            return _genreManager.AddGenre(name).GetGuidId();
         }
 
         public Guid GetMusicGenreId(string name)
@@ -882,14 +889,17 @@ namespace Emby.Server.Implementations.Library
             return GetItemByNameId<MusicGenre>(MusicGenre.GetPath(name));
         }
 
-        /// <summary>
-        /// Gets the genre.
-        /// </summary>
-        /// <param name="name">The name.</param>
-        /// <returns>Task{Genre}.</returns>
+        /// <inheritdoc />
+        public async Task<Genre> GetGenreAsync(string name, char slugChar = default)
+        {
+            // TODO: Emit ItemAdded
+            return await _genreManager.AddGenreAsync(name).ConfigureAwait(false);
+        }
+
+        /// <inheritdoc />
         public Genre GetGenre(string name)
         {
-            return CreateItemByName<Genre>(Genre.GetPath, name, new DtoOptions(true));
+            return GetGenreAsync(name).GetAwaiter().GetResult();
         }
 
         /// <summary>
@@ -1815,7 +1825,7 @@ namespace Emby.Server.Implementations.Library
                             new ItemChangeEventArgs
                             {
                                 Item = item,
-                                Parent = parent ?? item.GetParent()
+                                Parent = parent ?? (BaseItem)item.GetParent()
                             });
                     }
                     catch (Exception ex)
@@ -2046,11 +2056,11 @@ namespace Emby.Server.Implementations.Library
                         break;
                     }
 
-                    item = owner;
+                    item = (BaseItem)owner;
                 }
                 else
                 {
-                    item = parent;
+                    item = (BaseItem)parent;
                 }
             }
 
@@ -2062,10 +2072,10 @@ namespace Emby.Server.Implementations.Library
             return GetCollectionFoldersInternal(item, allUserRootChildren);
         }
 
-        private static List<Folder> GetCollectionFoldersInternal(BaseItem item, IEnumerable<Folder> allUserRootChildren)
+        private static List<Folder> GetCollectionFoldersInternal(IBaseItemMigration item, IEnumerable<Folder> allUserRootChildren)
         {
             return allUserRootChildren
-                .Where(i => string.Equals(i.Path, item.Path, StringComparison.OrdinalIgnoreCase) || i.PhysicalLocations.Contains(item.Path.AsSpan(), StringComparison.OrdinalIgnoreCase))
+                .Where(i => string.Equals(i.Path, ((IHasDynamicPath)item).Path, StringComparison.OrdinalIgnoreCase) || i.PhysicalLocations.Contains(((IHasDynamicPath)item).Path.AsSpan(), StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
 
@@ -2163,7 +2173,7 @@ namespace Emby.Server.Implementations.Library
                     break;
                 }
 
-                item = parent;
+                item = (BaseItem)parent;
             }
 
             return GetUserRootFolder().Children
@@ -2479,7 +2489,7 @@ namespace Emby.Server.Implementations.Library
                 var parent = episode.GetParent();
                 if (episodeInfo is null && parent.GetType() == typeof(Folder))
                 {
-                    episodeInfo = resolver.Resolve(parent.Path, true, null, null, isAbsoluteNaming);
+                    episodeInfo = resolver.Resolve(((BaseItem)parent).Path, true, null, null, isAbsoluteNaming);
                     if (episodeInfo is not null)
                     {
                         // add the container
@@ -2799,17 +2809,18 @@ namespace Emby.Server.Implementations.Library
             await SavePeopleMetadataAsync(people, cancellationToken).ConfigureAwait(false);
         }
 
-        public async Task<ItemImageInfo> ConvertImageToLocal(BaseItem item, ItemImageInfo image, int imageIndex)
+        public async Task<ItemImageInfo> ConvertImageToLocal(IBaseItemMigration item, ItemImageInfo image, int imageIndex)
         {
+            var baseItem = (BaseItem)item;
             foreach (var url in image.Path.Split('|'))
             {
                 try
                 {
-                    _logger.LogDebug("ConvertImageToLocal item {0} - image url: {1}", item.Id, url);
+                    _logger.LogDebug("ConvertImageToLocal item {0} - image url: {1}", baseItem.Id, url);
 
-                    await ProviderManager.SaveImage(item, url, image.Type, imageIndex, CancellationToken.None).ConfigureAwait(false);
+                    await ProviderManager.SaveImage(baseItem, url, image.Type, imageIndex, CancellationToken.None).ConfigureAwait(false);
 
-                    await item.UpdateToRepositoryAsync(ItemUpdateType.ImageUpdate, CancellationToken.None).ConfigureAwait(false);
+                    await baseItem.UpdateToRepositoryAsync(ItemUpdateType.ImageUpdate, CancellationToken.None).ConfigureAwait(false);
 
                     return item.GetImageInfo(image.Type, imageIndex);
                 }
@@ -2827,7 +2838,7 @@ namespace Emby.Server.Implementations.Library
 
             // Remove this image to prevent it from retrying over and over
             item.RemoveImage(image);
-            await item.UpdateToRepositoryAsync(ItemUpdateType.ImageUpdate, CancellationToken.None).ConfigureAwait(false);
+            await baseItem.UpdateToRepositoryAsync(ItemUpdateType.ImageUpdate, CancellationToken.None).ConfigureAwait(false);
 
             throw new InvalidOperationException();
         }

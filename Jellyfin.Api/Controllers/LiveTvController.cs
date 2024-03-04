@@ -604,7 +604,7 @@ public class LiveTvController : BaseJellyfinApiController
             IsSports = isSports,
             SeriesTimerId = seriesTimerId,
             Genres = genres,
-            GenreIds = genreIds
+            GenreIds = genreIds.Select(genreId => genreId.GetIntId()).ToArray()
         };
 
         if (!librarySeriesId.IsNullOrEmpty())
@@ -658,7 +658,7 @@ public class LiveTvController : BaseJellyfinApiController
             IsSports = body.IsSports,
             SeriesTimerId = body.SeriesTimerId,
             Genres = body.Genres,
-            GenreIds = body.GenreIds
+            GenreIds = body.GenreIds.Select(genreId => genreId.GetIntId()).ToArray()
         };
 
         if (!body.LibrarySeriesId.IsEmpty())
@@ -735,7 +735,7 @@ public class LiveTvController : BaseJellyfinApiController
             IsNews = isNews,
             IsSports = isSports,
             EnableTotalRecordCount = enableTotalRecordCount,
-            GenreIds = genreIds
+            GenreIds = genreIds.Select(genreId => genreId.GetIntId()).ToArray()
         };
 
         var dtoOptions = new DtoOptions { Fields = fields }
